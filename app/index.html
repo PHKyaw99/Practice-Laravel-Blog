@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories</title>
+    <link rel="stylesheet" href="./css/all.min.css">
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container w-50">
+            <a href="#" class="navbar-brand mx-auto">Categories</a>
+        </div>
+    </nav>
+    
+    <div class="container mt-3 w-50">
+        <form id="add" class="input-group">
+            <input type="text" class="form-control">
+            <button class="btn btn-dark"><i class="fa-regular fa-circle-plus"></i></button>
+        </form>
+        <ul id="list" class="list-group mt-3"></ul>
+    </div>
+
+    <script>
+        const api = "http://localhost:8000/api/categories";
+        const token = "3|mVnN6bojVatitoogVRwN52U2fEbC0moTZKutSnSe0cb2e9dc";
+
+        fetch(api, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => res.json())
+        .then(data => data.map( item => createItem(item) ));
+
+        document.querySelector("#add").onsubmit = e => {
+            e.preventDefault();
+            
+            const name = document.querySelector("input").value;
+
+            fetch(api, {
+                method: 'POST',
+                body: JSON.stringify({ name }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(res => res.json())
+            .then(item => createItem(item));
+
+            document.querySelector("input").value = "";
+            document.querySelector("input").focus();
+        }
+
+        function createItem(item) {
+            const li = document.createElement("li");
+            li.classList.add("list-group-item");
+            li.innerHTML = `<span>${item.name}</span>`;
+            
+            const del = document.createElement("a");
+            del.setAttribute("href", "#");
+            del.classList.add("fa-light", "fa-trash-xmark", "text-danger", "float-end");
+            del.onclick = () => {
+                fetch(`${api}/${item.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                li.remove();
+            }
+
+            li.appendChild(del);
+            
+            const edit = document.createElement("a");
+            edit.setAttribute("href", "#");
+            edit.classList.add("fa-light", "fa-pencil", "me-3", "float-end");
+            edit.onclick = () => {
+                const currentName = li.querySelector("span").textContent;
+                const updateName = prompt('Enter name', currentName);
+
+                if(updateName) {
+                    fetch(`${api}/${item.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({name: updateName}),
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    })
+                }
+
+                li.querySelector("span").textContent = updateName;
+            };
+            
+            li.appendChild(edit);
+
+
+            document.querySelector("#list").appendChild(li);
+        }
+    </script>
+</body>
+</html>
